@@ -1,2 +1,2 @@
 # polarbear
-polarbear is a cold wallet for cet etc
+polarbear is a cold wallet sdk
