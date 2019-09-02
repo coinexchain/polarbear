@@ -1,18 +1,18 @@
 package wallet
 
 import (
-	keyBase "polarbear/keybase"
+	 "polarbear/keybase"
 )
 
 var Api Wallet
 
 
 type Wallet struct {
-	keyBase.KeyBase
+	keybase.KeyBase
 }
 
 func Init(root string) {
-	Api.KeyBase = keyBase.NewDefaultKeyBase(root)
+	Api.KeyBase = keybase.NewDefaultKeyBase(root)
 }
 
 func CreateKey(name, password, bip39Passphrase string, account, index uint32) string {

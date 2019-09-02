@@ -1,4 +1,4 @@
-package keyBase
+package keybase
 
 import (
 	"fmt"
