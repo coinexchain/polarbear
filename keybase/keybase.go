@@ -32,7 +32,7 @@ type DefaultKeyBase struct {
 }
 
 func NewDefaultKeyBase(root string) DefaultKeyBase {
-	initCosmosKeyBaseConfig()
+	initDefaultKeyBaseConfig()
 	return DefaultKeyBase{
 		keys.New("keys", root),
 	}
@@ -114,25 +114,24 @@ func (k DefaultKeyBase) Sign(name, password, tx string) string {
 	return string(sig)
 }
 
-func initCosmosKeyBaseConfig() {
-	Bech32MainPrefix := "coinex"
-	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
-	Bech32PrefixAccAddr := Bech32MainPrefix
-	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key
-	Bech32PrefixAccPub := Bech32MainPrefix + types.PrefixPublic
-	// Bech32PrefixValAddr defines the Bech32 prefix of a validator's operator address
-	Bech32PrefixValAddr := Bech32MainPrefix + types.PrefixValidator + types.PrefixOperator
-	// Bech32PrefixValPub defines the Bech32 prefix of a validator's operator public key
-	Bech32PrefixValPub := Bech32MainPrefix + types.PrefixValidator + types.PrefixOperator + types.PrefixPublic
-	// Bech32PrefixConsAddr defines the Bech32 prefix of a consensus node address
-	Bech32PrefixConsAddr := Bech32MainPrefix + types.PrefixValidator + types.PrefixConsensus
-	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key
-	Bech32PrefixConsPub := Bech32MainPrefix + types.PrefixValidator + types.PrefixConsensus + types.PrefixPublic
+func initDefaultKeyBaseConfig() {
+	bench32MainPrefix := "coinex"
+	bench32PrefixAccAddr := bench32MainPrefix
+	// bench32PrefixAccPub defines the bench32 prefix of an account's public key
+	bench32PrefixAccPub := bench32MainPrefix + types.PrefixPublic
+	// bench32PrefixValAddr defines the bench32 prefix of a validator's operator address
+	bench32PrefixValAddr := bench32MainPrefix + types.PrefixValidator + types.PrefixOperator
+	// bench32PrefixValPub defines the bench32 prefix of a validator's operator public key
+	bench32PrefixValPub := bench32MainPrefix + types.PrefixValidator + types.PrefixOperator + types.PrefixPublic
+	// bench32PrefixConsAddr defines the bench32 prefix of a consensus node address
+	bench32PrefixConsAddr := bench32MainPrefix + types.PrefixValidator + types.PrefixConsensus
+	// bench32PrefixConsPub defines the bench32 prefix of a consensus node public key
+	bench32PrefixConsPub := bench32MainPrefix + types.PrefixValidator + types.PrefixConsensus + types.PrefixPublic
 
 	config := types.GetConfig()
 	config.SetCoinType(defaultCoinType)
-	config.SetBech32PrefixForAccount(Bech32PrefixAccAddr, Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(Bech32PrefixValAddr, Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
+	config.SetBech32PrefixForAccount(bench32PrefixAccAddr, bench32PrefixAccPub)
+	config.SetBech32PrefixForValidator(bench32PrefixValAddr, bench32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(bench32PrefixConsAddr, bench32PrefixConsPub)
 	config.Seal()
 }
