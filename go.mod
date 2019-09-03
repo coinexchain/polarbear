@@ -7,7 +7,8 @@ require (
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/syndtr/goleveldb v1.0.1-0.20190318030020-c3a204f8e965
-	github.com/tendermint/tendermint v0.32.3
+	github.com/magiconair/properties v1.8.0
+	github.com/stretchr/testify v1.3.0
+	github.com/tendermint/tendermint v0.32.3 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
