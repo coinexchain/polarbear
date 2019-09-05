@@ -37,5 +37,9 @@ func TestDefaultKeyBase(t *testing.T) {
 	res = testKeyBase.ResetPassword(name, password, newPassword)
 	assert.Equal(t, res, "")
 
+	mnemonic = "enlist shoe journey effort unfair scout layer affair arrow twice happy ready horn buyer loan deposit merge fancy panda gospel pole type essence side"
+	addr := testKeyBase.RecoverKey("alice", mnemonic, "password", "", 0, 0)
+	assert.Equal(t, "coinex1000ujfjr5tj4nac33mr7t76y2zvmzdmmpwfnx7", addr)
+
 	_ = os.RemoveAll("./tmp")
 }
