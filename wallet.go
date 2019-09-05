@@ -1,7 +1,7 @@
 package wallet
 
 import (
-	 "polarbear/keybase"
+	 "github.com/coinexchain/polarbear/keybase"
 )
 
 var Api Wallet
