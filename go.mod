@@ -1,4 +1,4 @@
-module polarbear
+module github.com/coinexchain/polarbear
 
 go 1.12
 
