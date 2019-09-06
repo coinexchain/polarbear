@@ -6,6 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 const (
@@ -135,3 +137,29 @@ func initDefaultKeyBaseConfig() {
 	config.SetBech32PrefixForConsensusNode(bench32PrefixConsAddr, bench32PrefixConsPub)
 	config.Seal()
 }
+
+// NewFundraiserParams creates a BIP 44 parameter object from the params:
+// m / 44' / coinType' / account' / 0 / address_index
+// The fixed parameters (purpose', coin_type', and change) are determined by what was used in the fundraiser.
+//func NewFundraiserParams(account, coinType, addressIdx uint32) *BIP44Params {
+//	return NewParams(44, coinType, account, false, addressIdx)
+//}
+
+func GetAddressFromEntropy(entropy []byte) (string,string,error) {
+	mnemonic, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return "", mnemonic, err
+	}
+
+	DefaultBIP39Passphrase := ""
+	seed := bip39.NewSeed(mnemonic, DefaultBIP39Passphrase)
+	fullHdPath := hd.NewFundraiserParams(0, defaultCoinType, 0) //account=0 addressIdx=0
+	masterPriv, ch := hd.ComputeMastersFromSeed(seed)
+	derivedPriv, err := hd.DerivePrivateKeyForPath(masterPriv, ch, fullHdPath.String())
+	pubk := secp256k1.PrivKeySecp256k1(derivedPriv).PubKey()
+	addr := pubk.Address()
+	acc := sdk.AccAddress(addr)
+	return acc.String(), mnemonic, nil
+}
+
+

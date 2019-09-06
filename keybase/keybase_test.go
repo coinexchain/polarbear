@@ -2,13 +2,23 @@ package keybase
 
 import (
 	"github.com/magiconair/properties/assert"
+	"github.com/cosmos/go-bip39"
 	assert2 "github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
+	"fmt"
 )
 
 var testKeyBase = NewDefaultKeyBase("./tmp")
+
+func getRandAddress() (string,string,error) {
+	entropy, err := bip39.NewEntropy(mnemonicEntropySize)
+	if err != nil {
+		return "", "", err
+	}
+	return GetAddressFromEntropy(entropy)
+}
 
 func TestDefaultKeyBase(t *testing.T) {
 
@@ -37,9 +47,13 @@ func TestDefaultKeyBase(t *testing.T) {
 	res = testKeyBase.ResetPassword(name, password, newPassword)
 	assert.Equal(t, res, "")
 
-	mnemonic = "enlist shoe journey effort unfair scout layer affair arrow twice happy ready horn buyer loan deposit merge fancy panda gospel pole type essence side"
-	addr := testKeyBase.RecoverKey("alice", mnemonic, "password", "", 0, 0)
-	assert.Equal(t, "coinex1000ujfjr5tj4nac33mr7t76y2zvmzdmmpwfnx7", addr)
+	for i:=0; i<10; i++ {
+		addr0, mnemonic, err := getRandAddress()
+		assert.Equal(t, nil, err)
+		name = fmt.Sprintf("user%d", i)
+		addr := testKeyBase.RecoverKey(name, mnemonic, "password", "", 0, 0)
+		assert.Equal(t, addr0, addr)
+	}
 
 	_ = os.RemoveAll("./tmp")
 }
