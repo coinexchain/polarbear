@@ -1,12 +1,14 @@
 package keybase
 
 import (
-	"fmt"
+	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
 	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/go-bip39"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/go-bip39"
+	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
@@ -15,7 +17,8 @@ const (
 	defaultCoinType     = 688
 )
 
-//todo: add GetAddress with name
+var gCdc = codec.New()
+
 type KeyBase interface {
 	CreateKey(name, password, bip39Passphrase string, account, index uint32) string
 	DeleteKey(name, password string) string
@@ -23,6 +26,8 @@ type KeyBase interface {
 	AddKey(name, armor string) string
 	ExportKey(name string) string
 	ListKeys() string
+	GetAddress(name string) string
+	GetPubKey(name string) string
 	ResetPassword(name, password, newPassword string) string
 	Sign(name, password, tx string) string
 }
@@ -56,7 +61,6 @@ func (k DefaultKeyBase) CreateKey(name, password, bip39Passphrase string, accoun
 	if err != nil {
 		return ""
 	}
-	fmt.Println(info.GetAddress().String())
 	return info.GetAddress().String() + "+" + mnemonic
 }
 
@@ -72,7 +76,6 @@ func (k DefaultKeyBase) RecoverKey(name, mnemonic, password, bip39Passphrase str
 	if err != nil {
 		return ""
 	}
-	fmt.Println(info.GetAddress().String())
 	return info.GetAddress().String()
 }
 
@@ -92,12 +95,35 @@ func (k DefaultKeyBase) ExportKey(name string) string {
 }
 
 func (k DefaultKeyBase) ListKeys() string {
-	_, err := k.kb.List()
+	infos, err := k.kb.List()
 	if err != nil {
-		return err.Error()
+		return ""
 	}
-	//todo: make a json string show infos
-	return ""
+	out, err := infosToJson(infos)
+	if err != nil {
+		return ""
+	}
+	return out
+}
+
+func (k DefaultKeyBase) GetAddress(name string) string {
+	info, err := k.kb.Get(name)
+	if err != nil {
+		return ""
+	}
+	return info.GetAddress().String()
+}
+
+func (k DefaultKeyBase) GetPubKey(name string) string {
+	info, err := k.kb.Get(name)
+	if err != nil {
+		return ""
+	}
+	benchPubKey, err := sdk.Bech32ifyAccPub(info.GetPubKey())
+	if err != nil {
+		return ""
+	}
+	return benchPubKey
 }
 
 func (k DefaultKeyBase) ResetPassword(name, password, newPassword string) string {
@@ -109,14 +135,20 @@ func (k DefaultKeyBase) ResetPassword(name, password, newPassword string) string
 }
 
 func (k DefaultKeyBase) Sign(name, password, tx string) string {
-	sig, _, err := k.kb.Sign(name, password, []byte(tx))
+	sig, pub, err := k.kb.Sign(name, password, []byte(tx))
 	if err != nil {
 		return ""
 	}
-	return string(sig)
+	stdSign := StdSignature{pub, sig}
+	out, err := gCdc.MarshalJSON(stdSign)
+	if err != nil {
+		return ""
+	}
+	return string(out)
 }
 
 func initDefaultKeyBaseConfig() {
+	initCodec()
 	bench32MainPrefix := "coinex"
 	bench32PrefixAccAddr := bench32MainPrefix
 	// bench32PrefixAccPub defines the bench32 prefix of an account's public key
@@ -138,6 +170,14 @@ func initDefaultKeyBaseConfig() {
 	config.Seal()
 }
 
+func initCodec() {
+	gCdc.RegisterInterface((*crypto.PubKey)(nil), nil)
+	gCdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
+	gCdc.RegisterInterface((*sdk.Msg)(nil), nil)
+	gCdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, "tendermint/PubKeySecp256k1", nil)
+	gCdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, "tendermint/PrivKeySecp256k1", nil)
+}
+
 // NewFundraiserParams creates a BIP 44 parameter object from the params:
 // m / 44' / coinType' / account' / 0 / address_index
 // The fixed parameters (purpose', coin_type', and change) are determined by what was used in the fundraiser.
@@ -145,7 +185,7 @@ func initDefaultKeyBaseConfig() {
 //	return NewParams(44, coinType, account, false, addressIdx)
 //}
 
-func GetAddressFromEntropy(entropy []byte) (string,string,error) {
+func GetAddressFromEntropy(entropy []byte) (string, string, error) {
 	mnemonic, err := bip39.NewMnemonic(entropy)
 	if err != nil {
 		return "", mnemonic, err
@@ -162,4 +202,19 @@ func GetAddressFromEntropy(entropy []byte) (string,string,error) {
 	return acc.String(), mnemonic, nil
 }
 
+func infosToJson(infos []keys.Info) (string, error) {
+	kos, err := keys.Bech32KeysOutput(infos)
+	if err != nil {
+		return "", err
+	}
+	out, err := json.Marshal(kos)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
 
+type StdSignature struct {
+	crypto.PubKey `json:"pub_key"`
+	Signature     []byte `json:"signature"`
+}

@@ -1,18 +1,18 @@
 package keybase
 
 import (
-	"github.com/magiconair/properties/assert"
+	"fmt"
 	"github.com/cosmos/go-bip39"
+	"github.com/magiconair/properties/assert"
 	assert2 "github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 var testKeyBase = NewDefaultKeyBase("./tmp")
 
-func getRandAddress() (string,string,error) {
+func getRandAddress() (string, string, error) {
 	entropy, err := bip39.NewEntropy(mnemonicEntropySize)
 	if err != nil {
 		return "", "", err
@@ -35,19 +35,44 @@ func TestDefaultKeyBase(t *testing.T) {
 	assert.Equal(t, len(info), 2)
 	mnemonic = info[1]
 	assert2.NotNil(t, mnemonic)
+	t.Log("create key pass")
 
 	res := testKeyBase.DeleteKey(name, password)
 	assert.Equal(t, res, "")
+	t.Log("delete key pass")
 
 	res = testKeyBase.RecoverKey(name, mnemonic, password, bip39Passphrase, account, index)
 	assert.Equal(t, res, info[0])
+	t.Log("recover key pass")
 
-	//keys := testKeyBase.ListKeys()
+	keys := testKeyBase.ListKeys()
+	assert2.Contains(t, keys, name)
+	t.Log("list keys pass")
 
 	res = testKeyBase.ResetPassword(name, password, newPassword)
 	assert.Equal(t, res, "")
+	t.Log("reset password pass")
 
-	for i:=0; i<10; i++ {
+	armor := testKeyBase.ExportKey(name)
+	assert2.NotEqual(t, "", armor)
+	t.Log("export keys pass")
+
+	res = testKeyBase.AddKey(name, armor)
+	assert.Equal(t, res, "Cannot overwrite data for name "+name)
+	res = testKeyBase.DeleteKey(name, newPassword)
+	assert.Equal(t, res, "")
+	res = testKeyBase.AddKey(name, armor)
+	assert.Equal(t, res, "")
+	address := testKeyBase.GetAddress(name)
+	assert.Equal(t, address, info[0])
+	t.Log("add key pass")
+	t.Log("get address pass")
+
+	res = testKeyBase.Sign(name, newPassword, "123")
+	assert2.NotEqual(t, "", res)
+	t.Log("sign pass")
+
+	for i := 0; i < 10; i++ {
 		addr0, mnemonic, err := getRandAddress()
 		assert.Equal(t, nil, err)
 		name = fmt.Sprintf("user%d", i)

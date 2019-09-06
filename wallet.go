@@ -1,11 +1,10 @@
 package wallet
 
 import (
-	 "github.com/coinexchain/polarbear/keybase"
+	"github.com/coinexchain/polarbear/keybase"
 )
 
 var Api Wallet
-
 
 type Wallet struct {
 	keybase.KeyBase
@@ -41,6 +40,14 @@ func ListKeys() string {
 
 func ResetPassword(name, password, newPassword string) string {
 	return Api.ResetPassword(name, password, newPassword)
+}
+
+func GetAddress(name string) string {
+	return Api.GetAddress(name)
+}
+
+func GetPubKey(name string) string {
+	return Api.GetPubKey(name)
 }
 
 func Sign(name, password, tx string) string {
