@@ -1,0 +1,74 @@
+package main
+
+import "C"
+
+import (
+	"github.com/coinexchain/polarbear/keybase"
+)
+
+var ApiForPython WalletForPython
+
+
+type WalletForPython struct {
+	keybase.KeyBase
+}
+
+//export BearInit
+func BearInit(root *C.char) {
+	ApiForPython.KeyBase = keybase.NewDefaultKeyBase(C.GoString(root))
+}
+
+//export CreateKey
+func CreateKey(name, password, bip39Passphrase *C.char, account, index C.uint) *C.char {
+	res := ApiForPython.CreateKey(C.GoString(name), C.GoString(password), C.GoString(bip39Passphrase), uint32(account), uint32(index))
+	return C.CString(res)
+}
+
+//export DeleteKey
+func DeleteKey(name, password *C.char) *C.char {
+	return C.CString(ApiForPython.DeleteKey(C.GoString(name), C.GoString(password)))
+}
+
+//export RecoverKey
+func RecoverKey(name, mnemonic, password, bip39Passphrase *C.char, account, index C.uint) *C.char {
+	return C.CString(ApiForPython.RecoverKey(C.GoString(name), C.GoString(mnemonic), C.GoString(password), C.GoString(bip39Passphrase), uint32(account), uint32(index)))
+}
+
+//export AddKey
+func AddKey(name, armor *C.char) *C.char {
+	return C.CString(ApiForPython.AddKey(C.GoString(name), C.GoString(armor)))
+}
+
+//export ExportKey
+func ExportKey(name *C.char) *C.char {
+	return C.CString(ApiForPython.ExportKey(C.GoString(name)))
+}
+
+//export ListKeys
+func ListKeys() *C.char {
+	return C.CString(ApiForPython.ListKeys())
+}
+
+//export ResetPassword
+func ResetPassword(name, password, newPassword *C.char) *C.char {
+	return C.CString(ApiForPython.ResetPassword(C.GoString(name), C.GoString(password), C.GoString(newPassword)))
+}
+
+//export GetAddress
+func GetAddress(name *C.char) *C.char {
+	return C.CString(ApiForPython.GetAddress(C.GoString(name)))
+}
+
+//export GetPubKey
+func GetPubKey(name *C.char) *C.char {
+	return C.CString(ApiForPython.GetPubKey(C.GoString(name)))
+}
+
+//export Sign
+func Sign(name, password, tx *C.char) *C.char {
+	return C.CString(ApiForPython.Sign(C.GoString(name), C.GoString(password), C.GoString(tx)))
+}
+
+func main() {
+
+}

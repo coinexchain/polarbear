@@ -3,6 +3,9 @@ vendor/
 .DS_Store
 *.iml
 coverage.html
-
+tmp/
+sdkforpython/tmp/
+*.so
+*.h
 *.out
 *.swp
