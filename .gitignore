@@ -9,3 +9,5 @@ sdkforpython/tmp/
 *.h
 *.out
 *.swp
+*.txt
+txgenerator
