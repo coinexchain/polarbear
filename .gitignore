@@ -10,4 +10,5 @@ sdkforpython/tmp/
 *.out
 *.swp
 *.txt
+*.png
 txgenerator
