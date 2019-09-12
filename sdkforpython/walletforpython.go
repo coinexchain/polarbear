@@ -64,6 +64,11 @@ func GetPubKey(name *C.char) *C.char {
 	return C.CString(ApiForPython.GetPubKey(C.GoString(name)))
 }
 
+//export GetSigner
+func GetSigner(signerInfo *C.char) *C.char {
+	return C.Cstring(ApiForPython.GetSigner(C.GoString(signerInfo)))
+}
+
 //export Sign
 func Sign(name, password, tx *C.char) *C.char {
 	return C.CString(ApiForPython.Sign(C.GoString(name), C.GoString(password), C.GoString(tx)))
