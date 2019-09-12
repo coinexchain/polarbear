@@ -2,11 +2,22 @@ package keybase
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/coinexchain/dex/modules/alias"
+	"github.com/coinexchain/dex/modules/asset"
+	"github.com/coinexchain/dex/modules/bancorlite"
+	"github.com/coinexchain/dex/modules/bankx"
+	"github.com/coinexchain/dex/modules/comment"
+	"github.com/coinexchain/dex/modules/distributionx"
+	"github.com/coinexchain/dex/modules/market"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
 	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sigType "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/go-bip39"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -29,6 +40,7 @@ type KeyBase interface {
 	GetAddress(name string) string
 	GetPubKey(name string) string
 	ResetPassword(name, password, newPassword string) string
+	GetSigner(signerInfo string) string
 	Sign(name, password, tx string) string
 }
 
@@ -36,12 +48,16 @@ var _ KeyBase = DefaultKeyBase{}
 
 type DefaultKeyBase struct {
 	kb keys.Keybase
+	name string
+	dir string
 }
 
 func NewDefaultKeyBase(root string) DefaultKeyBase {
 	initDefaultKeyBaseConfig()
 	return DefaultKeyBase{
 		keys.New("keys", root),
+		"keys",
+		root,
 	}
 }
 
@@ -83,6 +99,29 @@ func (k DefaultKeyBase) AddKey(name, armor string) string {
 	if err := k.kb.Import(name, armor); err != nil {
 		return err.Error()
 	}
+	addr := k.GetAddress(name)
+	if addr == ""{
+		return "no corresponding address"
+	}
+	levelDb, err := sdk.NewLevelDB(k.name, k.dir)
+	if err != nil {
+		return err.Error()
+	}
+	defer levelDb.Close()
+
+	addressSuffix := "address"
+	infoSuffix    := "info"
+	addrKey := func (address types.AccAddress) []byte {
+		return []byte(fmt.Sprintf("%s.%s", address.String(), addressSuffix))
+	}
+	infoKey := func (name string) []byte {
+		return []byte(fmt.Sprintf("%s.%s", name, infoSuffix))
+	}
+	accAddr, err := sdk.AccAddressFromBech32(addr)
+	if err != nil {
+		return err.Error()
+	}
+	levelDb.SetSync(addrKey(accAddr), infoKey(name))
 	return ""
 }
 
@@ -134,6 +173,32 @@ func (k DefaultKeyBase) ResetPassword(name, password, newPassword string) string
 	return ""
 }
 
+func (k DefaultKeyBase) GetSigner(signerInfo string) string {
+	var sign sigType.StdSignDoc
+	err := gCdc.UnmarshalJSON([]byte(signerInfo), &sign)
+	if err != nil {
+		return ""
+	}
+	var msg sdk.Msg
+	for _, m := range sign.Msgs {
+		err := gCdc.UnmarshalJSON(m, &msg)
+		if err != nil {
+			return ""
+		}
+		signers := msg.GetSigners()
+		if signers == nil || len(signers) == 0 {
+			return ""
+		}
+		signer := msg.GetSigners()[0]
+		info ,err := k.kb.GetByAddress(signer)
+		if err != nil {
+			return ""
+		}
+		return info.GetName()
+	}
+	return ""
+}
+
 func (k DefaultKeyBase) Sign(name, password, tx string) string {
 	sig, pub, err := k.kb.Sign(name, password, []byte(tx))
 	if err != nil {
@@ -176,6 +241,49 @@ func initCodec() {
 	gCdc.RegisterInterface((*sdk.Msg)(nil), nil)
 	gCdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, "tendermint/PubKeySecp256k1", nil)
 	gCdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, "tendermint/PrivKeySecp256k1", nil)
+	gCdc.RegisterConcrete(sigType.StdTx{}, "cosmos-sdk/StdTx", nil)
+	//alias
+	gCdc.RegisterConcrete(alias.MsgAliasUpdate{}, "alias/MsgAliasUpdate", nil)
+	//asset
+	gCdc.RegisterConcrete(asset.MsgIssueToken{}, "asset/MsgIssueToken", nil)
+	gCdc.RegisterConcrete(asset.MsgTransferOwnership{}, "asset/MsgTransferOwnership", nil)
+	gCdc.RegisterConcrete(asset.MsgMintToken{}, "asset/MsgMintToken", nil)
+	gCdc.RegisterConcrete(asset.MsgBurnToken{}, "asset/MsgBurnToken", nil)
+	gCdc.RegisterConcrete(asset.MsgForbidToken{}, "asset/MsgForbidToken", nil)
+	gCdc.RegisterConcrete(asset.MsgUnForbidToken{}, "asset/MsgUnForbidToken", nil)
+	gCdc.RegisterConcrete(asset.MsgAddTokenWhitelist{}, "asset/MsgAddTokenWhitelist", nil)
+	gCdc.RegisterConcrete(asset.MsgRemoveTokenWhitelist{}, "asset/MsgRemoveTokenWhitelist", nil)
+	gCdc.RegisterConcrete(asset.MsgForbidAddr{}, "asset/MsgForbidAddr", nil)
+	gCdc.RegisterConcrete(asset.MsgUnForbidAddr{}, "asset/MsgUnForbidAddr", nil)
+	gCdc.RegisterConcrete(asset.MsgModifyTokenInfo{}, "asset/MsgModifyTokenInfo", nil)
+	//bankx
+	gCdc.RegisterConcrete(bankx.MsgSetMemoRequired{}, "bankx/MsgSetMemoRequired", nil)
+	gCdc.RegisterConcrete(bankx.MsgSend{}, "bankx/MsgSend", nil)
+	gCdc.RegisterConcrete(bankx.MsgMultiSend{}, "bankx/MsgMultiSend", nil)
+	//bancor
+	gCdc.RegisterConcrete(bancorlite.MsgBancorInit{}, "bancorlite/MsgBancorInit", nil)
+	gCdc.RegisterConcrete(bancorlite.MsgBancorTrade{}, "bancorlite/MsgBancorTrade", nil)
+	gCdc.RegisterConcrete(bancorlite.MsgBancorCancel{}, "bancorlite/MsgBancorCancel", nil)
+	//comment
+	gCdc.RegisterConcrete(comment.MsgCommentToken{}, "comment/MsgCommentToken", nil)
+	//distribution
+	gCdc.RegisterConcrete(distributionx.MsgDonateToCommunityPool{}, "distrx/MsgDonateToCommunityPool", nil)
+	//gov
+	gCdc.RegisterConcrete(gov.MsgSubmitProposal{}, "cosmos-sdk/MsgSubmitProposal", nil)
+	gCdc.RegisterConcrete(gov.MsgDeposit{}, "cosmos-sdk/MsgDeposit", nil)
+	gCdc.RegisterConcrete(gov.MsgVote{}, "cosmos-sdk/MsgVote", nil)
+	//market
+	gCdc.RegisterConcrete(market.MsgCreateTradingPair{}, "market/MsgCreateTradingPair", nil)
+	gCdc.RegisterConcrete(market.MsgCreateOrder{}, "market/MsgCreateOrder", nil)
+	gCdc.RegisterConcrete(market.MsgCancelOrder{}, "market/MsgCancelOrder", nil)
+	gCdc.RegisterConcrete(market.MsgCancelTradingPair{}, "market/MsgCancelTradingPair", nil)
+	gCdc.RegisterConcrete(market.MsgModifyPricePrecision{}, "market/MsgModifyPricePrecision", nil)
+	//stake
+	gCdc.RegisterConcrete(staking.MsgCreateValidator{}, "cosmos-sdk/MsgCreateValidator", nil)
+	gCdc.RegisterConcrete(staking.MsgEditValidator{}, "cosmos-sdk/MsgEditValidator", nil)
+	gCdc.RegisterConcrete(staking.MsgDelegate{}, "cosmos-sdk/MsgDelegate", nil)
+	gCdc.RegisterConcrete(staking.MsgUndelegate{}, "cosmos-sdk/MsgUndelegate", nil)
+	gCdc.RegisterConcrete(staking.MsgBeginRedelegate{}, "cosmos-sdk/MsgBeginRedelegate", nil)
 }
 
 // NewFundraiserParams creates a BIP 44 parameter object from the params:

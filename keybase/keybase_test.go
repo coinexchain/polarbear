@@ -26,6 +26,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	password := "12345678"
 	newPassword := "11223344"
 	bip39Passphrase := "11111111"
+	var address string
 	var mnemonic string
 	var account uint32 = 0
 	var index uint32 = 0
@@ -34,6 +35,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	info := strings.Split(mnemonic, "+")
 	assert.Equal(t, len(info), 2)
 	mnemonic = info[1]
+	address = info[0]
 	assert2.NotNil(t, mnemonic)
 	t.Log("create key pass")
 
@@ -42,7 +44,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("delete key pass")
 
 	res = testKeyBase.RecoverKey(name, mnemonic, password, bip39Passphrase, account, index)
-	assert.Equal(t, res, info[0])
+	assert.Equal(t, res, address)
 	t.Log("recover key pass")
 
 	keys := testKeyBase.ListKeys()
@@ -63,12 +65,31 @@ func TestDefaultKeyBase(t *testing.T) {
 	assert.Equal(t, res, "")
 	res = testKeyBase.AddKey(name, armor)
 	assert.Equal(t, res, "")
-	address := testKeyBase.GetAddress(name)
-	assert.Equal(t, address, info[0])
+	addr := testKeyBase.GetAddress(name)
+	assert.Equal(t, addr, address)
 	t.Log("add key pass")
 	t.Log("get address pass")
 
-	res = testKeyBase.Sign(name, newPassword, "123")
+	unsignedFmtStr := "{\"account_number\":\"0\"," +
+		"\"chain_id\":\"coinexdex-test1\"," +
+		"\"fee\":" +
+		"{\"amount\":[{\"amount\":\"200000\",\"denom\":\"cet\"}]," +
+		"\"gas\":\"6000\"}," +
+		"\"memo\":\"\"," +
+		"\"msgs\":[{" +
+		"\"type\":\"bankx/MsgSend\"," +
+		"\"value\":{" +
+		"\"amount\":[{\"amount\":\"1000000\",\"denom\":\"cet\"}]," +
+		"\"from_address\":\"%s\"," +
+		"\"to_address\":\"coinex1rd3tgkzd8q8akaug53hnqwhr378xfeljchmzls\"," +
+		"\"unlock_time\":\"0\"}}]," +
+		"\"sequence\":\"2\"}"
+	unsignedStr := fmt.Sprintf(unsignedFmtStr, address)
+	signer := testKeyBase.GetSigner(unsignedStr)
+	assert.Equal(t, signer, name)
+	t.Log("getSigner pass")
+
+	res = testKeyBase.Sign(name, newPassword, unsignedStr)
 	assert2.NotEqual(t, "", res)
 	t.Log("sign pass")
 

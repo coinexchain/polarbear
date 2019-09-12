@@ -50,6 +50,10 @@ func GetPubKey(name string) string {
 	return Api.GetPubKey(name)
 }
 
+func GetSigner(signerInfo string) string {
+	return Api.GetSigner(signerInfo)
+}
+
 func Sign(name, password, tx string) string {
 	return Api.Sign(name, password, tx)
 }
