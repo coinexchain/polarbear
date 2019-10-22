@@ -1,5 +1,7 @@
 package main
 
+/*
+ */
 import "C"
 
 import (
@@ -59,14 +61,14 @@ func GetAddress(name *C.char) *C.char {
 	return C.CString(ApiForPython.GetAddress(C.GoString(name)))
 }
 
+//export GetSigner
+func GetSigner(signInfo *C.char) *C.char {
+	return C.CString(ApiForPython.GetSigner(C.GoString(signInfo)))
+}
+
 //export GetPubKey
 func GetPubKey(name *C.char) *C.char {
 	return C.CString(ApiForPython.GetPubKey(C.GoString(name)))
-}
-
-//export GetSigner
-func GetSigner(signerInfo *C.char) *C.char {
-	return C.Cstring(ApiForPython.GetSigner(C.GoString(signerInfo)))
 }
 
 //export Sign

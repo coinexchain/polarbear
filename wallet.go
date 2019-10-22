@@ -10,7 +10,7 @@ type Wallet struct {
 	keybase.KeyBase
 }
 
-func Init(root string) {
+func BearInit(root string) {
 	Api.KeyBase = keybase.NewDefaultKeyBase(root)
 }
 

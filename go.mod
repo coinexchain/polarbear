@@ -2,10 +2,8 @@ module github.com/coinexchain/polarbear
 
 go 1.12
 
-replace github.com/coinexchain/dex v0.0.13 => ./../coinexchain/dex
-
 require (
-	github.com/coinexchain/dex v0.0.13
+	github.com/coinexchain/dex v0.0.18
 	github.com/cosmos/cosmos-sdk v0.37.0
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
 	github.com/go-logfmt/logfmt v0.4.0 // indirect

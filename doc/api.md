@@ -96,10 +96,33 @@ func ResetPassword(name, password, newPassword string) string
 func GetAddress(name string) string
 ```
 
+name为秘钥名，返回值为bench32编码后的地址
+
 #### 获取指定秘钥对的公钥
 
 ```go
 func GetPubKey(name string) string
+```
+
+name为秘钥名，返回值为bench32编码后的公钥
+
+#### 获取签名者
+
+```
+func GetSigner(signerInfo string) string
+```
+
+signerInfo是下面所示结构体的json序列化后的字符串，返回值为签名者的秘钥的名字
+
+```
+type StdSignDoc struct {
+	AccountNumber uint64            `json:"account_number" yaml:"account_number"`
+	ChainID       string            `json:"chain_id" yaml:"chain_id"`
+	Fee           json.RawMessage   `json:"fee" yaml:"fee"`
+	Memo          string            `json:"memo" yaml:"memo"`
+	Msgs          []json.RawMessage `json:"msgs" yaml:"msgs"`
+	Sequence      uint64            `json:"sequence" yaml:"sequence"`
+}
 ```
 
 #### 签名
