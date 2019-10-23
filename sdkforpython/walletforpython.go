@@ -10,7 +10,6 @@ import (
 
 var ApiForPython WalletForPython
 
-
 type WalletForPython struct {
 	keybase.KeyBase
 }
@@ -37,13 +36,13 @@ func RecoverKey(name, mnemonic, password, bip39Passphrase *C.char, account, inde
 }
 
 //export AddKey
-func AddKey(name, armor *C.char) *C.char {
-	return C.CString(ApiForPython.AddKey(C.GoString(name), C.GoString(armor)))
+func AddKey(name, armor, passphrase *C.char) *C.char {
+	return C.CString(ApiForPython.AddKey(C.GoString(name), C.GoString(armor), C.GoString(passphrase)))
 }
 
 //export ExportKey
-func ExportKey(name *C.char) *C.char {
-	return C.CString(ApiForPython.ExportKey(C.GoString(name)))
+func ExportKey(name, decryptPassphrase, encryptPassphrase *C.char) *C.char {
+	return C.CString(ApiForPython.ExportKey(C.GoString(name), C.GoString(decryptPassphrase), C.GoString(encryptPassphrase)))
 }
 
 //export ListKeys

@@ -8,7 +8,7 @@ polarbear sdk提供下列接口供离线钱包使用
 func BearInit(root string)
 ```
 
-BearInit初始化sdk并在指定的路径root下创建leveldb
+BearInit初始化sdk并在用户指定的路径下创建钱包目录
 
 #### 创建秘钥对和地址
 
@@ -44,7 +44,7 @@ func RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index
 func AddKey(name, armor string) string
 ```
 
-从外部导入秘钥对到本地。armor可以由本sdk的秘钥对导出功能生成。
+从外部导入秘钥对到本地。armor可以由本sdk的秘钥对导出功能生成，或者通过cetcli keys export *keyname* 导出 
 
 #### 导出秘钥对
 
@@ -55,19 +55,14 @@ func ExportKey(name string) string
 导出指定秘钥对，返回值为armor编码的秘钥对信息，该字符串可以用于秘钥对导入，例如
 
 ```
------BEGIN TENDERMINT KEY INFO-----
-type: Info
-version: 0.0.0
+-----BEGIN TENDERMINT PRIVATE KEY-----
+kdf: bcrypt
+salt: 1190F48AAAC67A595040129049BDE6C7
 
-pwINrRU9CgdkZWZhdWx0EibrWumHIQLO+8Tz6UafnX7UcBQWwGuFG3JD0SvWyKel
-n7yTjPYmjxrvAS0tLS0tQkVHSU4gVEVOREVSTUlOVCBQUklWQVRFIEtFWS0tLS0t
-CmtkZjogYmNyeXB0CnNhbHQ6IDBDQjFDNDkwRTA4QzJDOEE4OEEyN0Q2QkE4MzFD
-RjM5CgpFQXFBV1lnNzBWMllDakRFeTZyYmd3M1IxdzNQNHFWL2JVOHV4RGQ1eXgz
-SkdBTk9QcWk3bURZdHB1M0xpMTYyCkdZSHZHR1VuTzBqaHl5T1RRQkhKaHBBYVlj
-RjZoa00xR2V1RnBTND0KPVNpanMKLS0tLS1FTkQgVEVOREVSTUlOVCBQUklWQVRF
-IEtFWS0tLS0t
-=/7vk
------END TENDERMINT KEY INFO-----
+JiooF+ymHFABgUV3w1y1LkG8OmeMZv7igpKi5dRALOQEhpocz6L2mOD6/b3nMj9T
+VtKPPbga5NUQ2F2JM1WNZOS+XKIXzGCHhoRiofs=
+=Elr7
+-----END TENDERMINT PRIVATE KEY-----
 ```
 
 #### 列出全部秘钥对信息

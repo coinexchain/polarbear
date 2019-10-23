@@ -26,12 +26,12 @@ func RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index
 	return Api.RecoverKey(name, mnemonic, password, bip39Passphrase, account, index)
 }
 
-func AddKey(name, armor string) string {
-	return Api.AddKey(name, armor)
+func AddKey(name, armor, passphrase string) string {
+	return Api.AddKey(name, armor, passphrase)
 }
 
-func ExportKey(name string) string {
-	return Api.ExportKey(name)
+func ExportKey(name, decryptPassphrase, encryptPassphrase string) string {
+	return Api.ExportKey(name, decryptPassphrase, encryptPassphrase)
 }
 
 func ListKeys() string {

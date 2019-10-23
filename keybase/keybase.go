@@ -2,7 +2,6 @@ package keybase
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/coinexchain/dex/modules/alias"
 	"github.com/coinexchain/dex/modules/asset"
 	"github.com/coinexchain/dex/modules/bancorlite"
@@ -34,8 +33,8 @@ type KeyBase interface {
 	CreateKey(name, password, bip39Passphrase string, account, index uint32) string
 	DeleteKey(name, password string) string
 	RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index uint32) string
-	AddKey(name, armor string) string
-	ExportKey(name string) string
+	AddKey(name, armor, passphrase string) string
+	ExportKey(name, decryptPassphrase, encryptPassphrase string) string
 	ListKeys() string
 	GetAddress(name string) string
 	GetPubKey(name string) string
@@ -47,9 +46,9 @@ type KeyBase interface {
 var _ KeyBase = DefaultKeyBase{}
 
 type DefaultKeyBase struct {
-	kb keys.Keybase
+	kb   keys.Keybase
 	name string
-	dir string
+	dir  string
 }
 
 func NewDefaultKeyBase(root string) DefaultKeyBase {
@@ -95,38 +94,38 @@ func (k DefaultKeyBase) RecoverKey(name, mnemonic, password, bip39Passphrase str
 	return info.GetAddress().String()
 }
 
-func (k DefaultKeyBase) AddKey(name, armor string) string {
-	if err := k.kb.Import(name, armor); err != nil {
+func (k DefaultKeyBase) AddKey(name, armor, passphrase string) string {
+	if err := k.kb.ImportPrivKey(name, armor, passphrase); err != nil {
 		return err.Error()
 	}
-	addr := k.GetAddress(name)
-	if addr == ""{
-		return "no corresponding address"
-	}
-	levelDb, err := sdk.NewLevelDB(k.name, k.dir)
-	if err != nil {
-		return err.Error()
-	}
-	defer levelDb.Close()
-
-	addressSuffix := "address"
-	infoSuffix    := "info"
-	addrKey := func (address types.AccAddress) []byte {
-		return []byte(fmt.Sprintf("%s.%s", address.String(), addressSuffix))
-	}
-	infoKey := func (name string) []byte {
-		return []byte(fmt.Sprintf("%s.%s", name, infoSuffix))
-	}
-	accAddr, err := sdk.AccAddressFromBech32(addr)
-	if err != nil {
-		return err.Error()
-	}
-	levelDb.SetSync(addrKey(accAddr), infoKey(name))
+	//addr := k.GetAddress(name)
+	//if addr == "" {
+	//	return "no corresponding address"
+	//}
+	//levelDb, err := sdk.NewLevelDB(k.name, k.dir)
+	//if err != nil {
+	//	return err.Error()
+	//}
+	//defer levelDb.Close()
+	//
+	//addressSuffix := "address"
+	//infoSuffix := "info"
+	//addrKey := func(address types.AccAddress) []byte {
+	//	return []byte(fmt.Sprintf("%s.%s", address.String(), addressSuffix))
+	//}
+	//infoKey := func(name string) []byte {
+	//	return []byte(fmt.Sprintf("%s.%s", name, infoSuffix))
+	//}
+	//accAddr, err := sdk.AccAddressFromBech32(addr)
+	//if err != nil {
+	//	return err.Error()
+	//}
+	//levelDb.SetSync(addrKey(accAddr), infoKey(name))
 	return ""
 }
 
-func (k DefaultKeyBase) ExportKey(name string) string {
-	armor, err := k.kb.Export(name)
+func (k DefaultKeyBase) ExportKey(name, decryptPassphrase, encryptPassphrase string) string {
+	armor, err := k.kb.ExportPrivKey(name, decryptPassphrase, encryptPassphrase)
 	if err != nil {
 		return ""
 	}
@@ -190,7 +189,7 @@ func (k DefaultKeyBase) GetSigner(signerInfo string) string {
 			return ""
 		}
 		signer := msg.GetSigners()[0]
-		info ,err := k.kb.GetByAddress(signer)
+		info, err := k.kb.GetByAddress(signer)
 		if err != nil {
 			return ""
 		}
