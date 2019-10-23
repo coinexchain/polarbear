@@ -19,5 +19,5 @@ go build -o wallet.so -buildmode=c-shared sdkforpython/walletforpython.go
 GOOS=android GOARCH=arm CGO_CFLAGS=“-I/Users/helldealer/Library/Android/sdk/ndk-bundle/sysroot/usr/include -I/Users/helldealer/Library/Android/sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi” CGO_LDFLAGS=“-L/Users/helldealer/Library/Android/sdk/ndk-bundle/sysroot/usr/lib” gomobile bind -target=android/arm  github.com/coinexchain/polarbear
 ```
 
-
+[**使用手册**](https://github.com/coinexchain/polarbear/blob/master/doc/manual.md)
 
