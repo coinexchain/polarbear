@@ -107,7 +107,15 @@ name为秘钥名，返回值为bench32编码后的公钥
 func GetSigner(signerInfo string) string
 ```
 
-signerInfo是下面所示结构体的json序列化后的字符串，返回值为签名者的秘钥的名字
+返回值为签名者的秘钥的名字
+
+#### 签名
+
+```go
+func Sign(name, password, tx string) string 
+```
+
+name是key的名字，password是存储私钥的密码，tx是如下结构的json序列化后的字符串
 
 ```
 type StdSignDoc struct {
@@ -120,15 +128,70 @@ type StdSignDoc struct {
 }
 ```
 
-#### 签名
-
-```go
-func Sign(name, password, tx string) string 
-```
-
 返回如下格式的json字符串
 
 ```
 {"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"A/GNrOR+zS7bvomsMG+BEIiGB8H+EvIDWGqfMOO5GVVV"},"signature":"pxUS22oste4S3Bmix5LDYgns27Lf5NxZH1duGdT+Yu5Fvz2kYOieeb5j/nxvjdM1TQ5wQUPo47vnWW+1fnjuiQ=="}
 ```
 
+#### 签名交易
+
+```
+func SignStdTx(name, password, tx, chainId string, accountNum, sequence uint64) string
+```
+
+name是秘钥名字，password是秘钥的存储密码，chainId是链的id，accountNum和sequence是账户相关字段，可以通过下面接口从节点获取
+
+```
+GET /auth/accounts/{address}
+```
+
+tx是下面结构的json序列化字符串
+
+```
+type StdTx struct {
+	Msgs       []sdk.Msg      `json:"msg" yaml:"msg"`
+	Fee        StdFee         `json:"fee" yaml:"fee"`
+	Signatures []StdSignature `json:"signatures" yaml:"signatures"`
+	Memo       string         `json:"memo" yaml:"memo"`
+}
+```
+
+该字符串可以通过节点提供的各个交易类型的rest接口返回的响应体中获取，例如转账交易可以通过下面的接口获取：
+
+```
+POST /bank/accounts/{address}/transfers
+```
+
+该接口返回值同上面的Sign方法
+
+#### 签名交易并返回可直接用于广播的字符串
+
+```
+func SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string
+```
+
+参数字段同上，mode为节点rest接口：POST /txs中的mode字段取值，如block，sync，async。
+
+返回值为下面结构的json序列化字符串，可直接用于POST /txs接口调用
+
+```
+type BroadcastReq struct {
+	Tx   types.StdTx `json:"tx" yaml:"tx"`
+	Mode string      `json:"mode" yaml:"mode"`
+}
+```
+
+**example：**
+
+输入的tx：
+
+```
+{"type":"auth/StdTx","value":{"msg":[{"type":"bankx/MsgSetMemoRequired","value":{"address":"coinex10kvrwz96tw5f6r2mg6l60qdqjc3dqr0kp5pn2l","required":true}}],"fee":{"amount":[{"denom":"cet","amount":"50"}],"gas":"200000"},"signatures":null,"memo":"Sent with example memo"}}
+```
+
+返回值：
+
+```
+{"tx":{"msg":[{"type":"bankx/MsgSetMemoRequired","value":{"address":"coinex10kvrwz96tw5f6r2mg6l60qdqjc3dqr0kp5pn2l","required":true}}],"fee":{"amount":[{"denom":"cet","amount":"50"}],"gas":"200000"},"signatures":[{"pub_key":{"type":"tendermint/PubKeySecp256k1","value":"A7xquC4+chG2jNu97GepRh/XQZqdRWkszaLt5OhXPYZ7"},"signature":"v9bAdhkVhBqfm7dKcH1Pteza3HjAcZZ7qzBKoaIOc81g2ngnxEt1G03G9X9I6zDpqBVAfWQK3+UoWLNzSB/i3A=="}],"memo":"Sent with example memo"},"mode":"sync"}
+```
