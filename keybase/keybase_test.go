@@ -26,6 +26,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	password := "12345678"
 	newPassword := "11223344"
 	bip39Passphrase := "11111111"
+	chainId := "coinexdex-test1"
 	var address string
 	var mnemonic string
 	var account uint32 = 0
@@ -57,7 +58,7 @@ func TestDefaultKeyBase(t *testing.T) {
 
 	armor := testKeyBase.ExportKey(name, newPassword, newPassword)
 	assert2.NotEqual(t, "", armor)
-	fmt.Println(armor)
+	//fmt.Println(armor)
 	t.Log("export keys pass")
 
 	res = testKeyBase.AddKey(name, armor, newPassword)
@@ -93,6 +94,22 @@ func TestDefaultKeyBase(t *testing.T) {
 	res = testKeyBase.Sign(name, newPassword, unsignedStr)
 	assert2.NotEqual(t, "", res)
 	t.Log("sign pass")
+
+	stdTxFmtStr := "{\"type\":\"auth/StdTx\"," +
+		"\"value\":{" +
+		"\"msg\":[{\"type\":\"bankx/MsgSetMemoRequired\",\"value\":{\"address\":\"%s\",\"required\":true}}]," +
+		"\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"50\"}],\"gas\":\"200000\"}," +
+		"\"signatures\":null," +
+		"\"memo\":\"Sent with example memo\"}}"
+	stdTx := fmt.Sprintf(stdTxFmtStr, address)
+	res = testKeyBase.SignStdTx(name, newPassword, stdTx,
+		chainId, 0, 1)
+	assert2.NotEqual(t, "", res)
+	//fmt.Println(res)
+
+	res = testKeyBase.SignAndBuildBroadcast(name, newPassword, stdTx, chainId, "sync", 0, 1)
+	assert2.NotEqual(t, "", res)
+	//fmt.Println(res)
 
 	for i := 0; i < 10; i++ {
 		addr0, mnemonic, err := getRandAddress()

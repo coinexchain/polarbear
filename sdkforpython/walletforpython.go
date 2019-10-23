@@ -75,6 +75,16 @@ func Sign(name, password, tx *C.char) *C.char {
 	return C.CString(ApiForPython.Sign(C.GoString(name), C.GoString(password), C.GoString(tx)))
 }
 
+//export SignStdTx
+func SignStdTx(name, password, tx, chainId *C.char, accountNum, sequence C.ulonglong) *C.char {
+	return C.CString(ApiForPython.SignStdTx(C.GoString(name), C.GoString(password), C.GoString(tx), C.GoString(chainId), uint64(accountNum), uint64(sequence)))
+}
+
+//export SignAndBuildBroadcast
+func SignAndBuildBroadcast(name, password, tx, chainId, mode *C.char, accountNum, sequence C.ulonglong) *C.char {
+	return C.CString(ApiForPython.SignAndBuildBroadcast(C.GoString(name), C.GoString(password), C.GoString(tx), C.GoString(chainId), C.GoString(mode), uint64(accountNum), uint64(sequence)))
+}
+
 func main() {
 
 }

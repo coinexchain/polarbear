@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
 	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	sigType "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -41,6 +42,8 @@ type KeyBase interface {
 	ResetPassword(name, password, newPassword string) string
 	GetSigner(signerInfo string) string
 	Sign(name, password, tx string) string
+	SignStdTx(name, password, tx, chainId string, accountNum, sequence uint64) string
+	SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string
 }
 
 var _ KeyBase = DefaultKeyBase{}
@@ -211,6 +214,60 @@ func (k DefaultKeyBase) Sign(name, password, tx string) string {
 	return string(out)
 }
 
+func (k DefaultKeyBase) signStdTx(name, password, tx, chainId string, accountNum, sequence uint64) (sigType.StdTx, string) {
+	stdTx := sigType.StdTx{}
+	err := gCdc.UnmarshalJSON([]byte(tx), &stdTx)
+	if err != nil {
+		return stdTx, err.Error()
+	}
+	var msgsBytes []json.RawMessage
+	for _, msg := range stdTx.Msgs {
+		msgsBytes = append(msgsBytes, json.RawMessage(msg.GetSignBytes()))
+	}
+	doc := sigType.StdSignDoc{
+		AccountNumber: accountNum,
+		ChainID:       chainId,
+		Fee:           stdTx.Fee.Bytes(),
+		Memo:          stdTx.Memo,
+		Msgs:          msgsBytes,
+		Sequence:      sequence,
+	}
+	bz, err := gCdc.MarshalJSON(doc)
+	if err != nil {
+		return stdTx, "marshal doc error"
+	}
+	ret, err := sdk.SortJSON(bz)
+	if err != nil {
+		return stdTx, "sort doc error"
+	}
+	out := k.Sign(name, password, string(ret))
+	return stdTx, out
+}
+
+func (k DefaultKeyBase) SignStdTx(name, password, tx, chainId string, accountNum, sequence uint64) string {
+	_, out := k.signStdTx(name, password, tx, chainId, accountNum, sequence)
+	return out
+}
+
+func (k DefaultKeyBase) SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string {
+	stdTx, out := k.signStdTx(name, password, tx, chainId, accountNum, sequence)
+	sig := sigType.StdSignature{}
+	err := gCdc.UnmarshalJSON([]byte(out), &sig)
+	if err != nil {
+		return err.Error()
+	}
+	stdTx.Signatures = []sigType.StdSignature{sig}
+	req := rest.BroadcastReq{
+		Tx:   stdTx,
+		Mode: mode,
+	}
+	ret, err := gCdc.MarshalJSON(req)
+	if err != nil {
+		return err.Error()
+	}
+	return string(ret)
+}
+
 func initDefaultKeyBaseConfig() {
 	initCodec()
 	bench32MainPrefix := "coinex"
@@ -240,7 +297,7 @@ func initCodec() {
 	gCdc.RegisterInterface((*sdk.Msg)(nil), nil)
 	gCdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, "tendermint/PubKeySecp256k1", nil)
 	gCdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, "tendermint/PrivKeySecp256k1", nil)
-	gCdc.RegisterConcrete(sigType.StdTx{}, "cosmos-sdk/StdTx", nil)
+	gCdc.RegisterConcrete(sigType.StdTx{}, "auth/StdTx", nil)
 	//alias
 	gCdc.RegisterConcrete(alias.MsgAliasUpdate{}, "alias/MsgAliasUpdate", nil)
 	//asset

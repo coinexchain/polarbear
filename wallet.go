@@ -57,3 +57,11 @@ func GetSigner(signerInfo string) string {
 func Sign(name, password, tx string) string {
 	return Api.Sign(name, password, tx)
 }
+
+func SignStdTx(name, password, tx, chainId string, accountNum, sequence uint64) string {
+	return Api.SignStdTx(name, password, tx, chainId, accountNum, sequence)
+}
+
+func SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string {
+	return Api.SignAndBuildBroadcast(name, password, tx, chainId, mode, accountNum, sequence)
+}
