@@ -62,7 +62,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("export keys pass")
 
 	res = testKeyBase.AddKey(name, armor, newPassword)
-	assert.Equal(t, res, "Cannot overwrite key "+name)
+	assert.Equal(t, res, errPrefix+errAdd+"Cannot overwrite key "+name)
 	res = testKeyBase.DeleteKey(name, newPassword)
 	assert.Equal(t, res, "")
 	res = testKeyBase.AddKey(name, armor, newPassword)
@@ -102,15 +102,15 @@ func TestDefaultKeyBase(t *testing.T) {
 		"\"signatures\":null," +
 		"\"memo\":\"Sent with example memo\"}}"
 	stdTx := fmt.Sprintf(stdTxFmtStr, address)
-	fmt.Println(stdTx)
+	//fmt.Println(stdTx)
 	res = testKeyBase.SignStdTx(name, newPassword, stdTx,
 		chainId, 0, 1)
 	assert2.NotEqual(t, "", res)
-	fmt.Println(res)
+	//fmt.Println(res)
 
 	res = testKeyBase.SignAndBuildBroadcast(name, newPassword, stdTx, chainId, "sync", 0, 1)
 	assert2.NotEqual(t, "", res)
-	fmt.Println(res)
+	//fmt.Println(res)
 
 	for i := 0; i < 10; i++ {
 		addr0, mnemonic, err := getRandAddress()

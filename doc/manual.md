@@ -69,9 +69,11 @@ POST /bank/accounts/{address}/transfers
 POST /txs
 ```
 
-
-
 #### 其他
 
 详见[API接口](https://github.com/coinexchain/polarbear/blob/master/doc/api.md)
+
+#### 错误返回格式
+
+参考[错误码](https://github.com/coinexchain/polarbear/blob/master/doc/errorcode.md)
 

@@ -2,6 +2,7 @@ package keybase
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/coinexchain/dex/modules/alias"
 	"github.com/coinexchain/dex/modules/asset"
 	"github.com/coinexchain/dex/modules/bancorlite"
@@ -67,24 +68,24 @@ func NewDefaultKeyBase(root string) DefaultKeyBase {
 func (k DefaultKeyBase) CreateKey(name, password, bip39Passphrase string, account, index uint32) string {
 	entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
 	if err != nil {
-		return ""
+		return createKeyErr(err)
 	}
 
 	mnemonic, err := bip39.NewMnemonic(entropySeed[:])
 	if err != nil {
-		return ""
+		return createKeyErr(err)
 	}
 	hdPath := hd.NewFundraiserParams(account, defaultCoinType, index)
 	info, err := k.kb.Derive(name, mnemonic, bip39Passphrase, password, *hdPath)
 	if err != nil {
-		return ""
+		return createKeyErr(err)
 	}
 	return info.GetAddress().String() + "+" + mnemonic
 }
 
 func (k DefaultKeyBase) DeleteKey(name, password string) string {
 	if err := k.kb.Delete(name, password, false); err != nil {
-		return err.Error()
+		return deleteKeyErr(err)
 	}
 	return ""
 }
@@ -92,14 +93,14 @@ func (k DefaultKeyBase) DeleteKey(name, password string) string {
 func (k DefaultKeyBase) RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index uint32) string {
 	info, err := k.kb.CreateAccount(name, mnemonic, bip39Passphrase, password, account, index)
 	if err != nil {
-		return ""
+		return recoveryKeyErr(err)
 	}
 	return info.GetAddress().String()
 }
 
 func (k DefaultKeyBase) AddKey(name, armor, passphrase string) string {
 	if err := k.kb.ImportPrivKey(name, armor, passphrase); err != nil {
-		return err.Error()
+		return addKeyErr(err)
 	}
 	//addr := k.GetAddress(name)
 	//if addr == "" {
@@ -130,7 +131,7 @@ func (k DefaultKeyBase) AddKey(name, armor, passphrase string) string {
 func (k DefaultKeyBase) ExportKey(name, decryptPassphrase, encryptPassphrase string) string {
 	armor, err := k.kb.ExportPrivKey(name, decryptPassphrase, encryptPassphrase)
 	if err != nil {
-		return ""
+		return exportKeyErr(err)
 	}
 	return armor
 }
@@ -138,11 +139,11 @@ func (k DefaultKeyBase) ExportKey(name, decryptPassphrase, encryptPassphrase str
 func (k DefaultKeyBase) ListKeys() string {
 	infos, err := k.kb.List()
 	if err != nil {
-		return ""
+		return listKeysErr(err)
 	}
 	out, err := infosToJson(infos)
 	if err != nil {
-		return ""
+		return listKeysErr(err)
 	}
 	return out
 }
@@ -150,7 +151,7 @@ func (k DefaultKeyBase) ListKeys() string {
 func (k DefaultKeyBase) GetAddress(name string) string {
 	info, err := k.kb.Get(name)
 	if err != nil {
-		return ""
+		return getAddressErr(err)
 	}
 	return info.GetAddress().String()
 }
@@ -158,7 +159,7 @@ func (k DefaultKeyBase) GetAddress(name string) string {
 func (k DefaultKeyBase) GetPubKey(name string) string {
 	info, err := k.kb.Get(name)
 	if err != nil {
-		return ""
+		return getPubKeyErr(err)
 	}
 	benchPubKey, err := sdk.Bech32ifyAccPub(info.GetPubKey())
 	if err != nil {
@@ -170,7 +171,7 @@ func (k DefaultKeyBase) GetPubKey(name string) string {
 func (k DefaultKeyBase) ResetPassword(name, password, newPassword string) string {
 	f := func() (string, error) { return newPassword, nil }
 	if err := k.kb.Update(name, password, f); err != nil {
-		return err.Error()
+		return resetPasswordErr(err)
 	}
 	return ""
 }
@@ -179,37 +180,37 @@ func (k DefaultKeyBase) GetSigner(signerInfo string) string {
 	var sign sigType.StdSignDoc
 	err := gCdc.UnmarshalJSON([]byte(signerInfo), &sign)
 	if err != nil {
-		return ""
+		return getSignerErr(err)
 	}
 	var msg sdk.Msg
 	for _, m := range sign.Msgs {
 		err := gCdc.UnmarshalJSON(m, &msg)
 		if err != nil {
-			return ""
+			return getSignerErr(err)
 		}
 		signers := msg.GetSigners()
 		if signers == nil || len(signers) == 0 {
-			return ""
+			return getSignerErr(errors.New("No signer found"))
 		}
 		signer := msg.GetSigners()[0]
 		info, err := k.kb.GetByAddress(signer)
 		if err != nil {
-			return ""
+			return getSignerErr(err)
 		}
 		return info.GetName()
 	}
-	return ""
+	return getSignerErr(errors.New("No msg found"))
 }
 
 func (k DefaultKeyBase) Sign(name, password, tx string) string {
 	sig, pub, err := k.kb.Sign(name, password, []byte(tx))
 	if err != nil {
-		return ""
+		return signErr(err)
 	}
 	stdSign := StdSignature{pub, sig}
 	out, err := gCdc.MarshalJSON(stdSign)
 	if err != nil {
-		return ""
+		return signErr(err)
 	}
 	return string(out)
 }
@@ -234,11 +235,11 @@ func (k DefaultKeyBase) signStdTx(name, password, tx, chainId string, accountNum
 	}
 	bz, err := gCdc.MarshalJSON(doc)
 	if err != nil {
-		return stdTx, "marshal doc error"
+		return stdTx, signStdTxErr(err)
 	}
 	ret, err := sdk.SortJSON(bz)
 	if err != nil {
-		return stdTx, "sort doc error"
+		return stdTx, signStdTxErr(err)
 	}
 	out := k.Sign(name, password, string(ret))
 	return stdTx, out
@@ -254,7 +255,7 @@ func (k DefaultKeyBase) SignAndBuildBroadcast(name, password, tx, chainId, mode 
 	sig := sigType.StdSignature{}
 	err := gCdc.UnmarshalJSON([]byte(out), &sig)
 	if err != nil {
-		return err.Error()
+		return signAndBuildErr(err)
 	}
 	stdTx.Signatures = []sigType.StdSignature{sig}
 	req := rest.BroadcastReq{
@@ -263,7 +264,7 @@ func (k DefaultKeyBase) SignAndBuildBroadcast(name, password, tx, chainId, mode 
 	}
 	ret, err := gCdc.MarshalJSON(req)
 	if err != nil {
-		return err.Error()
+		return signAndBuildErr(err)
 	}
 	return string(ret)
 }
