@@ -3,6 +3,7 @@ package keybase
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/coinexchain/dex/modules/alias"
 	"github.com/coinexchain/dex/modules/asset"
 	"github.com/coinexchain/dex/modules/bancorlite"
@@ -22,6 +23,7 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"strings"
 )
 
 const (
@@ -66,6 +68,15 @@ func NewDefaultKeyBase(root string) DefaultKeyBase {
 
 //todo: name repetition check
 func (k DefaultKeyBase) CreateKey(name, password, bip39Passphrase string, account, index uint32) string {
+	exist := k.GetAddress(name)
+	if !strings.HasPrefix(exist, errPrefix) {
+		return createKeyErr(errors.New("key with same name is already exist"))
+	}
+	if l := len(password); l < 8 {
+		s := fmt.Sprintf("password len %d is too short", l)
+		return createKeyErr(errors.New(s))
+	}
+
 	entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
 	if err != nil {
 		return createKeyErr(err)
@@ -298,7 +309,7 @@ func initCodec() {
 	gCdc.RegisterInterface((*sdk.Msg)(nil), nil)
 	gCdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, "tendermint/PubKeySecp256k1", nil)
 	gCdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, "tendermint/PrivKeySecp256k1", nil)
-	gCdc.RegisterConcrete(sigType.StdTx{}, "auth/StdTx", nil)
+	gCdc.RegisterConcrete(sigType.StdTx{}, "cosmos-sdk/StdTx", nil)
 	//alias
 	gCdc.RegisterConcrete(alias.MsgAliasUpdate{}, "alias/MsgAliasUpdate", nil)
 	//asset

@@ -32,13 +32,19 @@ func TestDefaultKeyBase(t *testing.T) {
 	var account uint32 = 0
 	var index uint32 = 0
 
+	defer os.RemoveAll("./tmp")
 	mnemonic = testKeyBase.CreateKey(name, password, bip39Passphrase, account, index)
 	info := strings.Split(mnemonic, "+")
 	assert.Equal(t, len(info), 2)
 	mnemonic = info[1]
 	address = info[0]
+	fmt.Println(address)
 	assert2.NotNil(t, mnemonic)
 	t.Log("create key pass")
+
+	mnemonic2 := testKeyBase.CreateKey(name, password, bip39Passphrase, account, index)
+	assert.Equal(t, mnemonic2, errPrefix + errCreate + "key with same name is already exist")
+	t.Log("repeat create key pass")
 
 	res := testKeyBase.DeleteKey(name, password)
 	assert.Equal(t, res, "")
@@ -95,14 +101,15 @@ func TestDefaultKeyBase(t *testing.T) {
 	assert2.NotEqual(t, "", res)
 	t.Log("sign pass")
 
-	stdTxFmtStr := "{\"type\":\"auth/StdTx\"," +
+	stdTxFmtStr := "{\"type\":\"cosmos-sdk/StdTx\"," +
 		"\"value\":{" +
 		"\"msg\":[{\"type\":\"bankx/MsgSetMemoRequired\",\"value\":{\"address\":\"%s\",\"required\":true}}]," +
-		"\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"50\"}],\"gas\":\"200000\"}," +
+		"\"fee\":{\"amount\":[{\"denom\":\"cet\",\"amount\":\"2000000000\"}],\"gas\":\"6000000\"}," +
 		"\"signatures\":null," +
 		"\"memo\":\"Sent with example memo\"}}"
+	address = "coinex1222kjfxeprsgaywfsuewlswrwmx3724etsepzc"
 	stdTx := fmt.Sprintf(stdTxFmtStr, address)
-	//fmt.Println(stdTx)
+	fmt.Println(stdTx)
 	res = testKeyBase.SignStdTx(name, newPassword, stdTx,
 		chainId, 0, 1)
 	assert2.NotEqual(t, "", res)
@@ -119,6 +126,4 @@ func TestDefaultKeyBase(t *testing.T) {
 		addr := testKeyBase.RecoverKey(name, mnemonic, "password", "", 0, 0)
 		assert.Equal(t, addr0, addr)
 	}
-
-	_ = os.RemoveAll("./tmp")
 }
