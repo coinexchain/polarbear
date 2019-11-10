@@ -38,7 +38,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	assert.Equal(t, len(info), 2)
 	mnemonic = info[1]
 	address = info[0]
-	fmt.Println(address)
+	//fmt.Println(address)
 	assert2.NotNil(t, mnemonic)
 	t.Log("create key pass")
 
@@ -46,7 +46,11 @@ func TestDefaultKeyBase(t *testing.T) {
 	assert.Equal(t, mnemonic2, errPrefix + errCreate + "key with same name is already exist")
 	t.Log("repeat create key pass")
 
-	res := testKeyBase.DeleteKey(name, password)
+	res := testKeyBase.RecoverKey(name, mnemonic, password, bip39Passphrase, account, index)
+	assert.Equal(t, res, errPrefix+errRecovery+"key with same name is already exist")
+	t.Log("recover exist key pass")
+
+	res = testKeyBase.DeleteKey(name, password)
 	assert.Equal(t, res, "")
 	t.Log("delete key pass")
 
@@ -109,7 +113,7 @@ func TestDefaultKeyBase(t *testing.T) {
 		"\"memo\":\"Sent with example memo\"}}"
 	address = "coinex1222kjfxeprsgaywfsuewlswrwmx3724etsepzc"
 	stdTx := fmt.Sprintf(stdTxFmtStr, address)
-	fmt.Println(stdTx)
+	//fmt.Println(stdTx)
 	res = testKeyBase.SignStdTx(name, newPassword, stdTx,
 		chainId, 0, 1)
 	assert2.NotEqual(t, "", res)

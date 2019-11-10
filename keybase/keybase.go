@@ -102,6 +102,10 @@ func (k DefaultKeyBase) DeleteKey(name, password string) string {
 }
 
 func (k DefaultKeyBase) RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index uint32) string {
+	exist := k.GetAddress(name)
+	if !strings.HasPrefix(exist, errPrefix) {
+		return recoveryKeyErr(errors.New("key with same name is already exist"))
+	}
 	info, err := k.kb.CreateAccount(name, mnemonic, bip39Passphrase, password, account, index)
 	if err != nil {
 		return recoveryKeyErr(err)
