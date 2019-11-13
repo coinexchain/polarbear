@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
-	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/rest"
@@ -35,6 +34,7 @@ const (
 )
 
 var gCdc = codec.New()
+var _ KeyBase = DefaultKeyBase{}
 
 type KeyBase interface {
 	CreateKey(name, password, bip39Passphrase string, account, index uint32) string
@@ -52,12 +52,15 @@ type KeyBase interface {
 	SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string
 }
 
-var _ KeyBase = DefaultKeyBase{}
-
 type DefaultKeyBase struct {
 	kb   keys.Keybase
 	name string
 	dir  string
+}
+
+type StdSignature struct {
+	crypto.PubKey `json:"pub_key"`
+	Signature     []byte `json:"signature"`
 }
 
 func NewDefaultKeyBase(root string) DefaultKeyBase {
@@ -292,17 +295,17 @@ func initDefaultKeyBaseConfig() {
 	bench32MainPrefix := "coinex"
 	bench32PrefixAccAddr := bench32MainPrefix
 	// bench32PrefixAccPub defines the bench32 prefix of an account's public key
-	bench32PrefixAccPub := bench32MainPrefix + types.PrefixPublic
+	bench32PrefixAccPub := bench32MainPrefix + sdk.PrefixPublic
 	// bench32PrefixValAddr defines the bench32 prefix of a validator's operator address
-	bench32PrefixValAddr := bench32MainPrefix + types.PrefixValidator + types.PrefixOperator
+	bench32PrefixValAddr := bench32MainPrefix + sdk.PrefixValidator + sdk.PrefixOperator
 	// bench32PrefixValPub defines the bench32 prefix of a validator's operator public key
-	bench32PrefixValPub := bench32MainPrefix + types.PrefixValidator + types.PrefixOperator + types.PrefixPublic
+	bench32PrefixValPub := bench32MainPrefix + sdk.PrefixValidator + sdk.PrefixOperator + sdk.PrefixPublic
 	// bench32PrefixConsAddr defines the bench32 prefix of a consensus node address
-	bench32PrefixConsAddr := bench32MainPrefix + types.PrefixValidator + types.PrefixConsensus
+	bench32PrefixConsAddr := bench32MainPrefix + sdk.PrefixValidator + sdk.PrefixConsensus
 	// bench32PrefixConsPub defines the bench32 prefix of a consensus node public key
-	bench32PrefixConsPub := bench32MainPrefix + types.PrefixValidator + types.PrefixConsensus + types.PrefixPublic
+	bench32PrefixConsPub := bench32MainPrefix + sdk.PrefixValidator + sdk.PrefixConsensus + sdk.PrefixPublic
 
-	config := types.GetConfig()
+	config := sdk.GetConfig()
 	config.SetCoinType(defaultCoinType)
 	config.SetBech32PrefixForAccount(bench32PrefixAccAddr, bench32PrefixAccPub)
 	config.SetBech32PrefixForValidator(bench32PrefixValAddr, bench32PrefixValPub)
@@ -395,9 +398,4 @@ func infosToJson(infos []keys.Info) (string, error) {
 		return "", err
 	}
 	return string(out), nil
-}
-
-type StdSignature struct {
-	crypto.PubKey `json:"pub_key"`
-	Signature     []byte `json:"signature"`
 }
