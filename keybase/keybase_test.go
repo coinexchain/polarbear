@@ -2,12 +2,13 @@ package keybase
 
 import (
 	"fmt"
-	"github.com/cosmos/go-bip39"
-	"github.com/magiconair/properties/assert"
-	assert2 "github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/cosmos/go-bip39"
+	"github.com/magiconair/properties/assert"
+	assert2 "github.com/stretchr/testify/assert"
 )
 
 var testKeyBase = NewDefaultKeyBase("./tmp")
@@ -43,7 +44,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("create key pass")
 
 	mnemonic2 := testKeyBase.CreateKey(name, password, bip39Passphrase, account, index)
-	assert.Equal(t, mnemonic2, errPrefix + errCreate + "key with same name is already exist")
+	assert.Equal(t, mnemonic2, errPrefix+errCreate+"key with same name is already exist")
 	t.Log("repeat create key pass")
 
 	res := testKeyBase.RecoverKey(name, mnemonic, password, bip39Passphrase, account, index)

@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/skip2/go-qrcode"
-
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/skip2/go-qrcode"
 )
 
 var (
