@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/go-bip39"
-	"github.com/magiconair/properties/assert"
-	assert2 "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 var testKeyBase = NewDefaultKeyBase("./tmp")
@@ -40,7 +39,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	mnemonic = info[1]
 	address = info[0]
 	//fmt.Println(address)
-	assert2.NotNil(t, mnemonic)
+	assert.NotNil(t, mnemonic)
 	t.Log("create key pass")
 
 	mnemonic2 := testKeyBase.CreateKey(name, password, bip39Passphrase, account, index)
@@ -60,7 +59,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("recover key pass")
 
 	keys := testKeyBase.ListKeys()
-	assert2.Contains(t, keys, name)
+	assert.Contains(t, keys, name)
 	t.Log("list keys pass")
 
 	res = testKeyBase.ResetPassword(name, password, newPassword)
@@ -68,7 +67,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("reset password pass")
 
 	armor := testKeyBase.ExportKey(name, newPassword, newPassword)
-	assert2.NotEqual(t, "", armor)
+	assert.NotEqual(t, "", armor)
 	//fmt.Println(armor)
 	t.Log("export keys pass")
 
@@ -103,7 +102,7 @@ func TestDefaultKeyBase(t *testing.T) {
 	t.Log("getSigner pass")
 
 	res = testKeyBase.Sign(name, newPassword, unsignedStr)
-	assert2.NotEqual(t, "", res)
+	assert.NotEqual(t, "", res)
 	t.Log("sign pass")
 
 	stdTxFmtStr := "{\"type\":\"cosmos-sdk/StdTx\"," +
@@ -117,11 +116,11 @@ func TestDefaultKeyBase(t *testing.T) {
 	//fmt.Println(stdTx)
 	res = testKeyBase.SignStdTx(name, newPassword, stdTx,
 		chainId, 0, 1)
-	assert2.NotEqual(t, "", res)
+	assert.NotEqual(t, "", res)
 	//fmt.Println(res)
 
 	res = testKeyBase.SignAndBuildBroadcast(name, newPassword, stdTx, chainId, "sync", 0, 1)
-	assert2.NotEqual(t, "", res)
+	assert.NotEqual(t, "", res)
 	//fmt.Println(res)
 
 	for i := 0; i < 10; i++ {
