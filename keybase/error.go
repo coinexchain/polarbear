@@ -3,19 +3,20 @@ package keybase
 const (
 	errPrefix = "POLARBEARError:"
 
-	errCreate        = "Create key:"
-	errDelete        = "Delete key:"
-	errRecovery      = "Recovery key:"
-	errAdd           = "Add key:"
-	errExport        = "Export key:"
-	errList          = "List keys:"
-	errGetAddress    = "Get address:"
-	errGetPubkey     = "Get pubkey:"
-	errResetPassword = "Reset password:"
-	errGetSigner     = "Get signer:"
-	errSign          = "Sign:"
-	errSignStdTx     = "Sign stdTx:"
-	errSignAndBuild  = "Sign and build bytes for broadcast:"
+	errCreate            = "Create key:"
+	errDelete            = "Delete key:"
+	errRecovery          = "Recovery key:"
+	errAdd               = "Add key:"
+	errExport            = "Export key:"
+	errList              = "List keys:"
+	errGetAddress        = "Get address:"
+	errGetPubkey         = "Get pubkey:"
+	errResetPassword     = "Reset password:"
+	errGetAddressFromWIF = "get address from WIF"
+	errGetSigner         = "Get signer:"
+	errSign              = "Sign:"
+	errSignStdTx         = "Sign stdTx:"
+	errSignAndBuild      = "Sign and build bytes for broadcast:"
 )
 
 func createKeyErr(err error) string {
@@ -56,6 +57,10 @@ func getSignerErr(err error) string {
 
 func resetPasswordErr(err error) string {
 	return errPrefix + errResetPassword + err.Error()
+}
+
+func getAddressFromWIF(err error) string {
+	return errPrefix + errGetAddressFromWIF + err.Error()
 }
 
 func signErr(err error) string {

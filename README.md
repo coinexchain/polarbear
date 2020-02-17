@@ -8,7 +8,7 @@
 - python用户可以通过下面的命令将sdk编译为动态库
 
 ```
-go build -o wallet.so -buildmode=c-shared sdkforpython/walletforpython.go
+go build -o wallet.so -buildmode=c-shared sdkforpython/wallet_for_python.go
 ```
 
 通过python的ctypes库使用该sdk，参考[demo](https://github.com/coinexchain/polarbear/blob/master/sdkforpython/demo.py)

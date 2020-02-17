@@ -101,6 +101,14 @@ func GetPubKey(name string) string
 
 name为秘钥名，返回值为bench32编码后的公钥
 
+#### 从WIF密钥中获取地址
+
+```go
+func GetAddressFromWIF(wif string) string
+```
+
+wif为WIF格式的私钥，返回值为bench32编码后的地址
+
 #### 获取签名者
 
 ```

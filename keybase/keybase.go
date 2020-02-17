@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcutil"
 	"strings"
 
 	"github.com/tendermint/tendermint/crypto"
@@ -47,6 +48,7 @@ type KeyBase interface {
 	GetPubKey(name string) string
 	ResetPassword(name, password, newPassword string) string
 	GetSigner(signerInfo string) string
+	GetAddressFromWIF(wif string) string
 	Sign(name, password, tx string) string
 	SignStdTx(name, password, tx, chainId string, accountNum, sequence uint64) string
 	SignAndBuildBroadcast(name, password, tx, chainId, mode string, accountNum, sequence uint64) string
@@ -195,6 +197,16 @@ func (k DefaultKeyBase) ResetPassword(name, password, newPassword string) string
 		return resetPasswordErr(err)
 	}
 	return ""
+}
+
+func (k DefaultKeyBase) GetAddressFromWIF(wif string) string {
+	w, err := btcutil.DecodeWIF(wif)
+	if err != nil {
+		return getAddressFromWIF(err)
+	}
+	var key [32]byte
+	copy(key[:], w.PrivKey.Serialize())
+	return sdk.AccAddress(secp256k1.PrivKeySecp256k1(key).PubKey().Address().Bytes()).String()
 }
 
 func (k DefaultKeyBase) GetSigner(signerInfo string) string {
@@ -398,4 +410,8 @@ func infosToJson(infos []keys.Info) (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+func NewWIF() {
+
 }

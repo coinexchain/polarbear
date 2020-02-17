@@ -1,4 +1,4 @@
-import ctypes
+import ctypes, shutil
 
 
 def demo():
@@ -6,7 +6,7 @@ def demo():
     password = "12345678".encode("utf-8")
     bip39_password = "11111111".encode("utf-8")
 
-    lib = ctypes.CDLL('./wallet.so')
+    lib = ctypes.CDLL('./wallet_mac.so')
 
     # sdk init
     lib.BearInit('tmp'.encode("utf-8"))
@@ -29,6 +29,13 @@ def demo():
     pubkey = get_pubkey(key_name)
     assert b'coinexpub' in pubkey
 
+    #get address from WIF
+    wif = b'5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ'
+    get_address_from_wif = lib.GetAddressFromWIF
+    get_address_from_wif.restype = ctypes.c_char_p
+    address_wif = get_address_from_wif(wif)
+    assert address_wif == b'coinex1my63mjadtw8nhzl69ukdepwzsyvv4yexfas4jz'
+
     # sign
     sign = lib.Sign
     sign.restype = ctypes.c_char_p
@@ -46,6 +53,7 @@ def demo():
     assert keys == b'[]'
     print("The polar bear live")
 
+    shutil.rmtree('./tmp')
 
 if __name__ == "__main__":
     demo()
