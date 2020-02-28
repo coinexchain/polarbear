@@ -5,7 +5,6 @@ vendor/
 coverage.html
 tmp/
 sdkforpython/tmp/
-*.so
 *.h
 *.out
 *.swp
