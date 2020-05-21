@@ -41,7 +41,7 @@ func RecoverKey(name, mnemonic, password, bip39Passphrase string, account, index
 #### 导入秘钥对
 
 ```go
-func AddKey(name, armor string) string
+func AddKey(name, armor, password string) string
 ```
 
 从外部导入秘钥对到本地。armor可以由本sdk的秘钥对导出功能生成，或者通过cetcli keys export *keyname* 导出 
